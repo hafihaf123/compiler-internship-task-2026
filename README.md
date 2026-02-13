@@ -23,6 +23,59 @@ Implement the `MiniKotlinCompiler` to translate MiniKotlin to Java such that:
 
 See `Prelude` in the stdlib for examples of how CPS functions should look.
 
+## Example
+
+Suppose that the MiniKotlin code looks like this:
+```kotlin
+fun factorial(n: Int): Int {
+    if (n <= 1) {
+        return 1
+    } else {
+        return n * factorial(n - 1)
+    }
+}
+
+// Main logic
+fun main(): Unit {
+    val result: Int = factorial(5)
+    println(result)
+
+    // Arithmetic and logical expressions
+    val a: Int = 10 + 5
+    val b: Boolean = a > 10
+    println(a)
+}
+```
+
+Then the supposed implementation can look like this: 
+```java
+public static void factorial(Integer n, Continuation<Integer> __continuation) { 
+  if ((n <= 1)) {
+    __continuation.accept(1);
+    return;
+  }
+  else {
+    factorial((n - 1), (arg0) -> {
+      __continuation.accept((n * arg0));
+      return;
+      });
+    }
+}
+
+public static void main(String[] args) { 
+  factorial(5, (arg0) -> {
+    Integer result = arg0;
+    Prelude.println(result, (arg1) -> {
+      Integer a = (10 + 5);
+      Boolean b = (a > 10);
+      Prelude.println(a, (arg2) -> {
+      });
+    });
+  });
+}
+```
+
+
 ## Building and Running
 
 ```bash
