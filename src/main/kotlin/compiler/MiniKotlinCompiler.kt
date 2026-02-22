@@ -1,4 +1,4 @@
-package org.example.compiler
+package compiler
 
 import MiniKotlinBaseVisitor
 import MiniKotlinParser

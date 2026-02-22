@@ -7,7 +7,7 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.example.compiler.CompilationResult
 import org.example.compiler.ExecutionResult
 import org.example.compiler.JavaRuntimeCompiler
-import org.example.compiler.MiniKotlinCompiler
+import compiler.MiniKotlinCompiler
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

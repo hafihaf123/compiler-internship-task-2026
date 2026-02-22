@@ -2,6 +2,7 @@ package org.example.compiler
 
 import MiniKotlinLexer
 import MiniKotlinParser
+import compiler.MiniKotlinCompiler
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.junit.jupiter.api.Test
@@ -16,14 +17,6 @@ class MiniKotlinCompilerTest {
 
     @TempDir
     lateinit var tempDir: Path
-
-    private fun parseString(source: String): MiniKotlinParser.ProgramContext {
-        val input = CharStreams.fromString(source)
-        val lexer = MiniKotlinLexer(input)
-        val tokens = CommonTokenStream(lexer)
-        val parser = MiniKotlinParser(tokens)
-        return parser.program()
-    }
 
     private fun parseFile(path: Path): MiniKotlinParser.ProgramContext {
         val input = CharStreams.fromPath(path)
