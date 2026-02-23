@@ -20,6 +20,7 @@ dependencies {
     implementation("org.antlr:antlr4-runtime:4.13.1")
     implementation(project(":stdlib"))
     testImplementation(kotlin("test"))
+    implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:2.3.0")
 }
 
 kotlin {
