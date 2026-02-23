@@ -1,0 +1,25 @@
+// Tests function calls, parameters, return statements, and recursion
+// This will heavily test your CPS transformation!
+fun fibonacci(n: Int): Int {
+    if (n <= 1) {
+        return n
+    }
+    // Note: this tests nested function calls in binary expressions
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+fun factorial(n: Int): Int {
+    if (n <= 1) {
+        return 1
+    } else {
+        return n * factorial(n - 1)
+    }
+}
+
+fun main(): Unit {
+    var fibResult: Int = fibonacci(6)
+    var factResult: Int = factorial(5)
+
+    println(fibResult) // 8
+    println(factResult) // 120
+}

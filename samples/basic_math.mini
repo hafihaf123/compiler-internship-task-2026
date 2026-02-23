@@ -1,0 +1,16 @@
+// Tests variable declarations, assignments, and basic arithmetic
+fun main(): Unit {
+    var a: Int = 10
+    var b: Int = 5
+
+    // Testing order of operations
+    var c: Int = a + b * 2    // 20
+    var d: Int = (a + b) * 2  // 30
+
+    // Testing assignment
+    a = a % 3   // 1
+
+    println(a)  // 1
+    println(c)  // 20
+    println(d)  // 30
+}

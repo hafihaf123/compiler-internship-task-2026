@@ -1,0 +1,18 @@
+// Tests booleans, strings, and logical operators
+fun isPositive(n: Int): Boolean {
+    return n > 0
+}
+
+fun main(): Unit {
+    var greeting: String = "Hello, MiniKotlin!"
+
+    var flag1: Boolean = true
+    var flag2: Boolean = false
+
+    var xorResult: Boolean = (flag1 && !flag2) || (!flag1 && flag2)  // true
+
+    if (xorResult == true) {
+        var check: Boolean = isPositive(5)
+        println(check) // true
+    }
+}
