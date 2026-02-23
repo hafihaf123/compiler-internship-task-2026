@@ -1,4 +1,4 @@
-package org.example.compiler
+package compiler
 
 enum class MiniKotlinType {
     Int,
@@ -13,5 +13,13 @@ enum class MiniKotlinType {
         String -> "String"
         Any -> "Any"
         Unit -> "Void"
+    }
+
+    fun toKotlinString(): String = when (this) {
+        Int -> "Int"
+        Boolean -> "Boolean"
+        String -> "String"
+        Any -> "Any"
+        Unit -> "Unit"
     }
 }
