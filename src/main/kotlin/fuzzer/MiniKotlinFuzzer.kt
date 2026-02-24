@@ -6,7 +6,7 @@ import java.io.File
 
 class MiniKotlinFuzzer(
     val iterations: Int = 1000,
-    val generator: MiniKotlinFuzzerGenerator = MiniKotlinFuzzerGenerator(202859949),
+    val generator: MiniKotlinFuzzerGenerator = MiniKotlinFuzzerGenerator(),
     val executor: MiniKotlinFuzzerExecutor = MiniKotlinFuzzerExecutor()
 )
 

@@ -10,7 +10,7 @@ import kotlin.random.Random
  * A Semantic Fuzzer for MiniKotlin.
  * Generates random, type-correct code to find bugs in the CPS Transpiler.
  */
-class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budget: Int = 100) {
+class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budget: Int = 200) {
     private val random = Random(seed)
     private var varCounter = 0
     private var funCounter = 0
@@ -199,6 +199,11 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
                     val op = listOf("<", "<=", ">", ">=", "==", "!=").random(random)
                     val lhs = generateExpression(MiniKotlinType.Int, exprDepth + 1)
                     val rhs = generateExpression(MiniKotlinType.Int, exprDepth + 1)
+                    "($lhs $op $rhs)"
+                } else if (random.nextBoolean()) {
+                    val op = listOf("==", "!=").random(random)
+                    val lhs = generateExpression(MiniKotlinType.String, exprDepth + 1)
+                    val rhs = generateExpression(MiniKotlinType.String, exprDepth + 1)
                     "($lhs $op $rhs)"
                 } else {
                     val op = listOf("&&", "||").random(random)
