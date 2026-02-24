@@ -1,0 +1,7 @@
+fun f0(v0: Int): Unit {
+    v0 = 50
+}
+
+fun main(): Unit {
+    f0(20)
+}

@@ -134,6 +134,8 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
     private fun checkVariableAssignment(ctx: MiniKotlinParser.VariableAssignmentContext) {
         val name = ctx.IDENTIFIER().text
         val variableType = lookupType(name) ?: error("Assignment to undeclared variable")
+        if (currentFunction.parameters.any { it.name == name })
+            error("Assignment to function parameter")
         val valueType = checkExpression(ctx.expression())
         if (variableType != valueType) error("The Lvalue and Rvalue in variable assignment have different types")
     }

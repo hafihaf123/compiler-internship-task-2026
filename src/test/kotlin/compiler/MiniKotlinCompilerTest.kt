@@ -11,6 +11,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -194,5 +195,15 @@ class MiniKotlinCompilerTest {
         val output = executionResult.stdout
         assertTrue(output.contains("77"), "Expected output to contain result 77, but got: $output")
         assertTrue(output.contains("88"), "Expected output to contain result 88, but got: $output")
+    }
+
+    @Test
+    fun `compile assignment_to_params_mini fails`() {
+        val examplePath = Paths.get("samples/assignment_to_params.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
+        assertEquals("Assignment to function parameter", exc.message)
     }
 }
