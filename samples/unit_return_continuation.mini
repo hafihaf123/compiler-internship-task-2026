@@ -1,0 +1,11 @@
+fun f0(v0: String): Unit {
+    // println("f0")
+    println(v0)
+    return
+}
+
+fun main(): Unit {
+    f0("one")
+    f0("two")
+    // return
+}

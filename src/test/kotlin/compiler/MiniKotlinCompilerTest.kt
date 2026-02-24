@@ -228,4 +228,26 @@ class MiniKotlinCompilerTest {
         val output = executionResult.stdout
         assertEquals("f0\nmain\n", output)
     }
+
+    @Test
+    fun `compile unit_return_continuation_mini outputs one and two`() {
+        val examplePath = Paths.get("samples/unit_return_continuation.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val javaCode = compiler.compile(program)
+
+        val javaFile = tempDir.resolve("MiniProgram.java")
+        Files.writeString(javaFile, javaCode)
+
+        val javaCompiler = JavaRuntimeCompiler()
+        val stdlibPath = resolveStdlibPath()
+        val (compilationResult, executionResult) = javaCompiler.compileAndExecute(javaFile, stdlibPath)
+
+        assertIs<CompilationResult.Success>(compilationResult)
+        assertIs<ExecutionResult.Success>(executionResult)
+
+        val output = executionResult.stdout
+        assertEquals("one\ntwo\n", output)
+    }
 }
