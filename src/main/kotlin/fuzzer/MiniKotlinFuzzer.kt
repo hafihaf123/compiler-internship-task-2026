@@ -12,7 +12,7 @@ class MiniKotlinFuzzer(
 
 fun main() {
     println("Starting Differential Fuzzer...")
-    val fuzzer = MiniKotlinFuzzer()
+    val fuzzer = MiniKotlinFuzzer(10000)
     var failures = 0
 
     with(fuzzer) {

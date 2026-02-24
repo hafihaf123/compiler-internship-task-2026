@@ -10,10 +10,12 @@ import kotlin.random.Random
  * A Semantic Fuzzer for MiniKotlin.
  * Generates random, type-correct code to find bugs in the CPS Transpiler.
  */
-class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
+class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budget: Int = 100) {
     private val random = Random(seed)
     private var varCounter = 0
     private var funCounter = 0
+
+    private lateinit var currentFunction: MiniKotlinFunction
 
     private var funtable = mutableListOf<MiniKotlinFunction>()
     private var symtable = mutableMapOf<String, MiniKotlinType>()
@@ -27,7 +29,6 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
             }
         }
         val main = generateFunction("main", MiniKotlinType.Unit, 0)
-        // println("$functions$main")
         return "$functions$main"
     }
 
@@ -45,10 +46,14 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
             emptyList()
         }
         val paramsString = parameters.joinToString { "${it.name}: ${it.type.toKotlinString()}" }
-        val returnExpression = if (returnType == MiniKotlinType.Unit) "" else generateExpression(returnType)
+        currentFunction = UserDefinedFunction(name, parameters, returnType, null)
+        val returnExpression = if (returnType == MiniKotlinType.Unit) {
+            if (random.nextBoolean()) "return"
+            else ""
+        } else "return " + generateExpression(returnType)
         val body = generateBlock()
-        funtable.add(UserDefinedFunction(name, parameters, returnType, null))
-        return "fun $name($paramsString): ${returnType.toKotlinString()} {\n$body\nreturn $returnExpression\n}\n\n"
+        funtable.add(currentFunction)
+        return "fun $name($paramsString): ${returnType.toKotlinString()} {\n$body\n$returnExpression\n}\n\n"
     }
 
     private fun generateFunctionParameter(): MiniKotlinParam {
@@ -77,14 +82,22 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
     }
 
     private fun generateStatement(depth: Int): String {
+        if (budget <=0) return ""
+        budget--
+
+        val blockChance = 0.5 / (depth + 1) // Probability drops: 50% -> 25% -> 16%
+        val choice = random.nextDouble()
+
+        val assignableVars =
+            symtable.keys.toList().filter { currentFunction.parameters.none { param -> param.name == it } }
         val choices = buildList {
             add("VarDecl")
-            if (symtable.isNotEmpty()) {
+            add("Print")
+            add("Expression")
+            if (assignableVars.isNotEmpty()) {
                 add("Assignment")
-                add("Print")
-                add("Expression")
             }
-            if (depth < 3) addAll(listOf("If", "While"))
+            if (choice < blockChance && depth < 3) addAll(listOf("If", "While"))
         }
 
         return when (choices.random(random)) {
@@ -97,15 +110,15 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
             }
 
             "Assignment" -> {
-                val availableVars = symtable.keys.toList()
-                val name = availableVars.random(random)
+                val name = assignableVars.random(random)
                 val type = symtable[name]!!
                 "$name = ${generateExpression(type)}"
             }
 
             "Print" -> {
                 val availableVars = symtable.keys.toList()
-                val name = availableVars.random(random)
+                val name = if (availableVars.isEmpty()) generateExpression(MiniKotlinType.Any)
+                else availableVars.random(random)
                 "println($name)"
             }
 
@@ -134,15 +147,17 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
     }
 
     private fun generateExpression(type: MiniKotlinType, exprDepth: Int = 0): String {
+        budget--
+
         val varsOfType = symtable.entries.filter { it.value == type }.map { it.key }
 
-        // 20% chance to use an existing variable if available
-        if (varsOfType.isNotEmpty() && random.nextDouble() < 0.2) {
+        // 30% chance to use an existing variable if available
+        if (varsOfType.isNotEmpty() && random.nextDouble() < 0.3) {
             return varsOfType.random(random)
         }
 
         val forceBaseCase = exprDepth >= 3
-        val terminate = forceBaseCase || random.nextBoolean()
+        val terminate = forceBaseCase || budget < 10 || random.nextBoolean()
 
         val functionsOfType = funtable.filter { it.returnType == type }
 
@@ -191,7 +206,7 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
                     "\"$chars\""
                 } else {
                     val lhs = generateExpression(MiniKotlinType.String, exprDepth + 1)
-                    val rhs = generateExpression(MiniKotlinType.String, 3)
+                    val rhs = generateExpression(MiniKotlinType.String, exprDepth + 1)
                     "($lhs + $rhs)"
                 }
             }
