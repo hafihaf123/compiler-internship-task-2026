@@ -194,7 +194,8 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
     }
 
     override fun visitReturnStatement(ctx: MiniKotlinParser.ReturnStatementContext): String {
-        val expression = ctx.expression() ?: return "__continuation.accept(null);\nreturn;"
+        val expression = ctx.expression()
+            ?: return if (currentFunction.name == "main") "" else "__continuation.accept(null);\nreturn;"
         return parseExpression(expression) { "__continuation.accept($it);\nreturn;" }
     }
 
