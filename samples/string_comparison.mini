@@ -1,0 +1,7 @@
+fun main(): Unit {
+    var a: String = "a"
+    a = a + "b"
+    if (a == "ab") {
+        println("ok")
+    }
+}

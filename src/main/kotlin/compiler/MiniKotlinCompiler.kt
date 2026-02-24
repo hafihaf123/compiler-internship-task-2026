@@ -227,9 +227,15 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
             k
         )
 
-        is MiniKotlinParser.MulDivExprContext, is MiniKotlinParser.AddSubExprContext, is MiniKotlinParser.ComparisonExprContext, is MiniKotlinParser.EqualityExprContext -> parseBinary(
+        is MiniKotlinParser.MulDivExprContext, is MiniKotlinParser.AddSubExprContext, is MiniKotlinParser.ComparisonExprContext -> parseBinary(
             ctx.getChild(0) as MiniKotlinParser.ExpressionContext,
             MiniKotlinBinaryOperation.fromString(ctx.getChild(1).text),
+            ctx.getChild(2) as MiniKotlinParser.ExpressionContext,
+            k
+        )
+
+        is MiniKotlinParser.EqualityExprContext -> parseEqBinary(
+            ctx.getChild(0) as MiniKotlinParser.ExpressionContext,
             ctx.getChild(2) as MiniKotlinParser.ExpressionContext,
             k
         )
@@ -282,6 +288,14 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
         else -> throw UnsupportedOperationException("Expression type not implemented: ${ctx.javaClass.simpleName}")
     }
 
+    private fun parseEqBinary(
+        left: MiniKotlinParser.ExpressionContext, right: MiniKotlinParser.ExpressionContext, k: (String) -> String
+    ): String = parseExpression(left) { lValue ->
+        parseExpression(right) { rValue ->
+            k("java.util.Objects.equals($lValue, $rValue)")
+        }
+    }
+
     private fun parseAndBinary(
         left: MiniKotlinParser.ExpressionContext, right: MiniKotlinParser.ExpressionContext, k: (String) -> String
     ): String = parseExpression(left) { lValue ->
@@ -312,13 +326,12 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
         op: MiniKotlinBinaryOperation,
         right: MiniKotlinParser.ExpressionContext,
         k: (String) -> String
-    ): String {
-        return parseExpression(left) { lValue ->
-            parseExpression(right) { rValue ->
-                k("($lValue $op $rValue)")
-            }
+    ): String = parseExpression(left) { lValue ->
+        parseExpression(right) { rValue ->
+            k("($lValue $op $rValue)")
         }
     }
+
 
     private fun checkBinary(
         left: MiniKotlinParser.ExpressionContext,
