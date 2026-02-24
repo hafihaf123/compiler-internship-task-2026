@@ -20,17 +20,19 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
 
     fun generateProgram(maxFunctions: Int = 3): String {
         funCounter = 0
+        funtable.clear()
         val functions = buildString {
             repeat(random.nextInt(maxFunctions)) {
                 append(generateFunction())
             }
         }
         val main = generateFunction("main", MiniKotlinType.Unit, 0)
+        // println("$functions$main")
         return "$functions$main"
     }
 
     private fun randomType(): MiniKotlinType =
-        listOf(MiniKotlinType.Int, MiniKotlinType.String, MiniKotlinType.Boolean).random()
+        listOf(MiniKotlinType.Int, MiniKotlinType.String, MiniKotlinType.Boolean).random(random)
 
     private fun generateFunction(
         name: String = "f${funCounter++}", returnType: MiniKotlinType = randomType(), maxParams: Int = 3
@@ -49,7 +51,12 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
         return "fun $name($paramsString): ${returnType.toKotlinString()} {\n$body\nreturn $returnExpression\n}\n\n"
     }
 
-    private fun generateFunctionParameter(): MiniKotlinParam = MiniKotlinParam("arg${varCounter++}", randomType())
+    private fun generateFunctionParameter(): MiniKotlinParam {
+        val name = "v${varCounter++}"
+        val type = randomType()
+        symtable[name] = type
+        return MiniKotlinParam(name, type)
+    }
 
     private fun generateBlock(depth: Int = 0, maxStatements: Int = 10): String {
         if (depth > 3) return "" // Prevent infinite nesting
@@ -75,7 +82,7 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
             if (symtable.isNotEmpty()) {
                 add("Assignment")
                 add("Print")
-                add("FunCall")
+                add("Expression")
             }
             if (depth < 3) addAll(listOf("If", "While"))
         }
@@ -120,6 +127,8 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
                 "$counterDeclaration\nwhile ($counterName < 3) {\n$counterIncrement\n$blockCode}"
             }
 
+            "Expression" -> generateExpression(MiniKotlinType.Any, 3)
+
             else -> ""
         }
     }
@@ -127,13 +136,22 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
     private fun generateExpression(type: MiniKotlinType, exprDepth: Int = 0): String {
         val varsOfType = symtable.entries.filter { it.value == type }.map { it.key }
 
-        // 30% chance to use an existing variable if available
-        if (varsOfType.isNotEmpty() && random.nextDouble() < 0.3) {
+        // 20% chance to use an existing variable if available
+        if (varsOfType.isNotEmpty() && random.nextDouble() < 0.2) {
             return varsOfType.random(random)
         }
 
         val forceBaseCase = exprDepth >= 3
         val terminate = forceBaseCase || random.nextBoolean()
+
+        val functionsOfType = funtable.filter { it.returnType == type }
+
+        // 20% chance to use a pre-declared function
+        if (!terminate && functionsOfType.isNotEmpty() && random.nextDouble() < 0.2) {
+            val function = functionsOfType.random(random)
+            val params = function.parameters.joinToString { generateExpression(it.type, 2) }
+            return "${function.name}($params)"
+        }
 
         return when (type) {
             MiniKotlinType.Int -> {
@@ -150,10 +168,15 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong()) {
             MiniKotlinType.Boolean -> {
                 if (terminate) {
                     random.nextBoolean().toString()
-                } else {
+                } else if (random.nextBoolean()) {
                     val op = listOf("<", "<=", ">", ">=", "==", "!=").random(random)
                     val lhs = generateExpression(MiniKotlinType.Int, exprDepth + 1)
                     val rhs = generateExpression(MiniKotlinType.Int, exprDepth + 1)
+                    "($lhs $op $rhs)"
+                } else {
+                    val op = listOf("&&", "||").random(random)
+                    val lhs = generateExpression(MiniKotlinType.Boolean, exprDepth + 1)
+                    val rhs = generateExpression(MiniKotlinType.Boolean, exprDepth + 1)
                     "($lhs $op $rhs)"
                 }
             }

@@ -6,7 +6,7 @@ import java.io.File
 
 class MiniKotlinFuzzer(
     val iterations: Int = 1000,
-    val generator: MiniKotlinFuzzerGenerator = MiniKotlinFuzzerGenerator(),
+    val generator: MiniKotlinFuzzerGenerator = MiniKotlinFuzzerGenerator(202859949),
     val executor: MiniKotlinFuzzerExecutor = MiniKotlinFuzzerExecutor()
 )
 
@@ -20,7 +20,7 @@ fun main() {
             val sourceCode = generator.generateProgram()
 
             try {
-                if (i % 500 == 0) executor.resetEngine()
+                executor.resetEngine()
 
                 val kotlinResult = executor.executeKotlin(sourceCode)
                 val (compilationResult, executionResult) = executor.executeMiniKotlin(sourceCode)
@@ -30,14 +30,14 @@ fun main() {
                     File("FailingBatch.mini").writeText(sourceCode)
                     System.err.println("Errors: ${compilationResult.errors}")
                     failures++
-                    continue
+                    break
                 }
 
                 if (executionResult is ExecutionResult.Failure) {
                     System.err.println("\n❌ JAVA EXECUTION FAILED ON BATCH!")
                     System.err.println("Error: ${executionResult.error}")
                     failures++
-                    continue
+                    break
                 }
 
                 if (kotlinResult is ExecutionResult.Failure) {
@@ -60,15 +60,19 @@ fun main() {
                     System.err.println("--- Transpiler Output ---")
                     System.err.println(myOutput)
                     failures++
-                    continue
+                    break
                 } else {
                     print("-")
                     if (i % 100 == 0) println(" ($i/$iterations)")
                 }
 
             } catch (e: Exception) {
+                println()
                 println("Exception during iteration $i: ${e.message}")
                 failures++
+                println()
+                println(sourceCode)
+                break
             }
         }
         println("Fuzzing complete. $iterations iterations passed with $failures failures.")

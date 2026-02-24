@@ -9,6 +9,7 @@ import org.example.compiler.CompilationResult
 import org.example.compiler.ExecutionResult
 import org.example.compiler.JavaRuntimeCompiler
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.PrintStream
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -16,6 +17,7 @@ import javax.script.ScriptEngineManager
 import javax.script.ScriptException
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.writeText
+import kotlin.io.writeText
 
 class MiniKotlinFuzzerExecutor {
     private var engine = ScriptEngineManager().getEngineByExtension("kts")!!
@@ -55,7 +57,13 @@ class MiniKotlinFuzzerExecutor {
         val javaCompiler = JavaRuntimeCompiler()
         val stdlibPath = resolveStdlibPath()
 
-        return javaCompiler.compileAndExecute(javaFile, stdlibPath)
+        val result = javaCompiler.compileAndExecute(javaFile, stdlibPath)
+
+        if (result.first is CompilationResult.Failure) {
+            File("FailingBatch.java").writeText(javaCode)
+        }
+
+        return result
     }
 
     fun executeKotlin(sourceCode: String): ExecutionResult {
