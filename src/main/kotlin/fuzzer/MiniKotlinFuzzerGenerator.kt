@@ -20,7 +20,7 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
     private var funtable = mutableListOf<MiniKotlinFunction>()
     private var symtable = mutableMapOf<String, MiniKotlinType>()
 
-    fun generateProgram(maxFunctions: Int = 3): String {
+    fun generateProgram(maxFunctions: Int = 5): String {
         funCounter = 0
         funtable.clear()
         val functions = buildString {
@@ -33,6 +33,9 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
     }
 
     private fun randomType(): MiniKotlinType =
+        listOf(MiniKotlinType.Int, MiniKotlinType.String, MiniKotlinType.Boolean, MiniKotlinType.Unit).random(random)
+
+    private fun randomNonUnitType(): MiniKotlinType =
         listOf(MiniKotlinType.Int, MiniKotlinType.String, MiniKotlinType.Boolean).random(random)
 
     private fun generateFunction(
@@ -58,7 +61,7 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
 
     private fun generateFunctionParameter(): MiniKotlinParam {
         val name = "v${varCounter++}"
-        val type = randomType()
+        val type = randomNonUnitType()
         symtable[name] = type
         return MiniKotlinParam(name, type)
     }
@@ -82,7 +85,7 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
     }
 
     private fun generateStatement(depth: Int): String {
-        if (budget <=0) return ""
+        if (budget <= 0) return ""
         budget--
 
         val blockChance = 0.5 / (depth + 1) // Probability drops: 50% -> 25% -> 16%
@@ -94,6 +97,9 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
             add("VarDecl")
             add("Print")
             add("Expression")
+            if (funtable.any { it.returnType == MiniKotlinType.Unit }) {
+                add("UnitFunctionCall")
+            }
             if (assignableVars.isNotEmpty()) {
                 add("Assignment")
             }
@@ -102,7 +108,7 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
 
         return when (choices.random(random)) {
             "VarDecl" -> {
-                val type = randomType()
+                val type = randomNonUnitType()
                 val name = "v${varCounter++}"
                 val expr = generateExpression(type)
                 symtable[name] = type
@@ -140,7 +146,13 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
                 "$counterDeclaration\nwhile ($counterName < 3) {\n$counterIncrement\n$blockCode}"
             }
 
-            "Expression" -> generateExpression(MiniKotlinType.Any, 3)
+            "Expression" -> generateExpression(randomType(), 3)
+
+            "UnitFunctionCall" -> {
+                val function = funtable.filter { it.returnType == MiniKotlinType.Unit }.random(random)
+                val params = function.parameters.joinToString { generateExpression(it.type, 2) }
+                "${function.name}($params)"
+            }
 
             else -> ""
         }
@@ -211,9 +223,19 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
                 }
             }
 
-            MiniKotlinType.Unit -> "Unit"
+            MiniKotlinType.Unit -> {
+                if (!terminate && functionsOfType.isNotEmpty()) {
+                    val function = functionsOfType.random(random)
+                    val params = function.parameters.joinToString { generateExpression(it.type, 2) }
+                    "${function.name}($params)"
+                } else if (varsOfType.isNotEmpty()) {
+                    varsOfType.random(random)
+                } else {
+                    "println(\"unit_fallback\")"
+                }
+            }
 
-            MiniKotlinType.Any -> generateExpression(randomType(), exprDepth)
+            MiniKotlinType.Any -> generateExpression(randomNonUnitType(), exprDepth)
         }
     }
 }

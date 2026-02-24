@@ -206,4 +206,27 @@ class MiniKotlinCompilerTest {
         val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
         assertEquals("Assignment to function parameter", exc.message)
     }
+
+    @Test
+    fun `compile implicit_return_mini outputs f0 and main`() {
+        val examplePath = Paths.get("samples/implicit_return.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val javaCode = compiler.compile(program)
+
+        val javaFile = tempDir.resolve("MiniProgram.java")
+        Files.writeString(javaFile, javaCode)
+
+        val javaCompiler = JavaRuntimeCompiler()
+        val stdlibPath = resolveStdlibPath()
+        val (compilationResult, executionResult) = javaCompiler.compileAndExecute(javaFile, stdlibPath)
+
+        assertIs<CompilationResult.Success>(compilationResult)
+        assertIs<ExecutionResult.Success>(executionResult)
+
+        val output = executionResult.stdout
+        assertTrue(output.contains("f0"), "Expected output to contain result f0, but got: $output")
+        assertTrue(output.contains("main"), "Expected output to contain result main, but got: $output")
+    }
 }
