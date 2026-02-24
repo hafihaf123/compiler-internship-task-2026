@@ -172,4 +172,27 @@ class MiniKotlinCompilerTest {
         val output = executionResult.stdout
         assertEquals("a\na\n", output, "Expected output to be 'a\na\n', but got: '$output'")
     }
+
+    @Test
+    fun `compile function_args_namespace_collision_mini outputs 77 and 88`() {
+        val examplePath = Paths.get("samples/function_args_namespace_collision.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val javaCode = compiler.compile(program)
+
+        val javaFile = tempDir.resolve("MiniProgram.java")
+        Files.writeString(javaFile, javaCode)
+
+        val javaCompiler = JavaRuntimeCompiler()
+        val stdlibPath = resolveStdlibPath()
+        val (compilationResult, executionResult) = javaCompiler.compileAndExecute(javaFile, stdlibPath)
+
+        assertIs<CompilationResult.Success>(compilationResult)
+        assertIs<ExecutionResult.Success>(executionResult)
+
+        val output = executionResult.stdout
+        assertTrue(output.contains("77"), "Expected output to contain result 77, but got: $output")
+        assertTrue(output.contains("88"), "Expected output to contain result 88, but got: $output")
+    }
 }

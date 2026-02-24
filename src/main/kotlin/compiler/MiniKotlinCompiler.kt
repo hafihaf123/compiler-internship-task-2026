@@ -16,9 +16,9 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
 
     private fun lookupType(name: String): MiniKotlinType? = symtable.firstNotNullOfOrNull { it[name] }
 
-    private val variableInfo = mutableMapOf<String, Boolean>()
+//    private val variableInfo = mutableMapOf<String, Boolean>()
 
-    private var currentReturnType: MiniKotlinType = MiniKotlinType.Unit
+    private lateinit var currentFunction: MiniKotlinFunction
 
     private var tmpCounter = 0
         get() = field++
@@ -34,7 +34,7 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
         val builder = StringBuilder()
         for (function in functionTable.values) {
             if (function !is UserDefinedFunction) continue
-            currentReturnType = function.returnType
+            currentFunction = function
             parseFunctionDeclaration(function)
             builder.append(function.toString())
         }
@@ -63,7 +63,7 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
 
     private fun parseParameter(ctx: MiniKotlinParser.ParameterContext): MiniKotlinParam {
         val name = ctx.IDENTIFIER().text
-        variableInfo[name] = false
+//        variableInfo[name] = false
         return MiniKotlinParam(name, parseType(ctx.type()))
     }
 
@@ -122,7 +122,7 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
         val valueType = checkExpression(ctx.expression())
         if (valueType != type) error("The Lvalue and Rvalue in variable declaration have different types")
         val name = ctx.IDENTIFIER().text
-        variableInfo[name] = true
+//        variableInfo[name] = true
         symtable.first()[name] = type
     }
 
@@ -191,7 +191,7 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
 
     override fun visitReturnStatement(ctx: MiniKotlinParser.ReturnStatementContext): String {
         val expression = ctx.expression() ?: run {
-            if (currentReturnType == MiniKotlinType.Unit) return ""
+            if (currentFunction.returnType == MiniKotlinType.Unit) return ""
             return "__continuation.accept(null);\nreturn;"
         }
         return parseExpression(expression) { "__continuation.accept($it);\nreturn;" }
@@ -199,11 +199,11 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
 
     private fun checkReturnStatement(ctx: MiniKotlinParser.ReturnStatementContext) {
         val expression = ctx.expression() ?: run {
-            if (currentReturnType != MiniKotlinType.Unit) error("Expected $currentReturnType but returned Unit")
+            if (currentFunction.returnType != MiniKotlinType.Unit) error("Expected ${currentFunction.returnType} but returned Unit")
             return
         }
         val valueType = checkExpression(expression)
-        if (valueType != currentReturnType) error("Function return type does not match with returned value")
+        if (valueType != currentFunction.returnType) error("Function return type does not match with returned value")
     }
 
     private fun parseExpression(
@@ -364,7 +364,7 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
 
         is MiniKotlinParser.IdentifierExprContext -> {
             val name = ctx.IDENTIFIER().text
-            val suffix = if (variableInfo[name] ?: false) "[0]" else ""
+            val suffix = if (currentFunction.parameters.none { it.name == name }) "[0]" else ""
             k("$name$suffix")
         }
 

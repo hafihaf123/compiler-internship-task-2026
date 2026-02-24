@@ -1,0 +1,9 @@
+fun f0(v0: Int): Unit {
+    println(v0)
+}
+
+fun main(): Unit {
+    var v0: Int = 77
+    println(v0)
+    f0(88)
+}
