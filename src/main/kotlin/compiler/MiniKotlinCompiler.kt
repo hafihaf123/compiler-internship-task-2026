@@ -45,8 +45,7 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
         val name = ctx.IDENTIFIER().text
         val parameters = parseParameterList(ctx.parameterList())
         val returnType = parseType(ctx.type())
-        if (name == "main" && returnType != MiniKotlinType.Unit)
-            error("Main function shouldn't return any value")
+        if (name == "main" && returnType != MiniKotlinType.Unit) error("Main function shouldn't return any value")
         val blockCtx = ctx.block()
         return UserDefinedFunction(name, parameters, returnType, blockCtx)
     }
@@ -64,7 +63,7 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
 
     private fun parseParameter(ctx: MiniKotlinParser.ParameterContext): MiniKotlinParam {
         val name = ctx.IDENTIFIER().text
-        variableInfo[name] =  false
+        variableInfo[name] = false
         return MiniKotlinParam(name, parseType(ctx.type()))
     }
 
@@ -214,7 +213,19 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
 
         is MiniKotlinParser.NotExprContext -> parseExpression(ctx.expression()) { k("!$it") }
 
-        is MiniKotlinParser.MulDivExprContext, is MiniKotlinParser.AddSubExprContext, is MiniKotlinParser.ComparisonExprContext, is MiniKotlinParser.EqualityExprContext, is MiniKotlinParser.AndExprContext, is MiniKotlinParser.OrExprContext -> parseBinary(
+        is MiniKotlinParser.AndExprContext -> parseAndBinary(
+            ctx.getChild(0) as MiniKotlinParser.ExpressionContext,
+            ctx.getChild(2) as MiniKotlinParser.ExpressionContext,
+            k
+        )
+
+        is MiniKotlinParser.OrExprContext -> parseOrBinary(
+            ctx.getChild(0) as MiniKotlinParser.ExpressionContext,
+            ctx.getChild(2) as MiniKotlinParser.ExpressionContext,
+            k
+        )
+
+        is MiniKotlinParser.MulDivExprContext, is MiniKotlinParser.AddSubExprContext, is MiniKotlinParser.ComparisonExprContext, is MiniKotlinParser.EqualityExprContext -> parseBinary(
             ctx.getChild(0) as MiniKotlinParser.ExpressionContext,
             MiniKotlinBinaryOperation.fromString(ctx.getChild(1).text),
             ctx.getChild(2) as MiniKotlinParser.ExpressionContext,
@@ -224,11 +235,12 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
         is MiniKotlinParser.FunctionCallExprContext -> {
             val name = ctx.IDENTIFIER().text
             val functionName = functionTable[name]!!.name
-            parseArgumentList(ctx.argumentList().expression()) { args ->
+            parseArgumentList(ctx.argumentList()?.expression() ?: emptyList()) { args ->
                 val tmpArg = "__arg$tmpCounter"
                 val next = k(tmpArg).indent().trimEnd()
                 val block = if (next.isEmpty()) "{});" else "{\n$next\n});"
-                "${functionName}(${args.joinToString(", ")}, ($tmpArg) -> $block"
+                val args = args.fold("") { acc, string -> "$acc$string, " }
+                "$functionName($args($tmpArg) -> $block"
             }
         }
 
@@ -246,7 +258,11 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
             valueType
         }
 
-        is MiniKotlinParser.MulDivExprContext, is MiniKotlinParser.AddSubExprContext, is MiniKotlinParser.ComparisonExprContext, is MiniKotlinParser.EqualityExprContext, is MiniKotlinParser.AndExprContext, is MiniKotlinParser.OrExprContext -> {
+        is MiniKotlinParser.AndExprContext, is MiniKotlinParser.OrExprContext -> checkLogicalBinary(
+            ctx.getChild(0) as MiniKotlinParser.ExpressionContext, ctx.getChild(2) as MiniKotlinParser.ExpressionContext
+        )
+
+        is MiniKotlinParser.MulDivExprContext, is MiniKotlinParser.AddSubExprContext, is MiniKotlinParser.ComparisonExprContext, is MiniKotlinParser.EqualityExprContext -> {
             checkBinary(
                 ctx.getChild(0) as MiniKotlinParser.ExpressionContext,
                 MiniKotlinBinaryOperation.fromString(ctx.getChild(1).text),
@@ -257,11 +273,36 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
         is MiniKotlinParser.FunctionCallExprContext -> {
             val name = ctx.IDENTIFIER().text
             val function = functionTable[name] ?: error("Called function not found: $name")
-            checkArgumentList(ctx.argumentList().expression(), function.parameters)
+            checkArgumentList(ctx.argumentList()?.expression() ?: emptyList(), function.parameters)
             function.returnType
         }
 
         else -> throw UnsupportedOperationException("Expression type not implemented: ${ctx.javaClass.simpleName}")
+    }
+
+    private fun parseAndBinary(
+        left: MiniKotlinParser.ExpressionContext, right: MiniKotlinParser.ExpressionContext, k: (String) -> String
+    ): String = parseExpression(left) { lValue ->
+        "if ($lValue) {\n" + parseExpression(right) { rValue ->
+            k(rValue)
+        }.indent() + "\n} else {\n${k("false").indent()}\n}"
+    }
+
+    private fun checkLogicalBinary(
+        left: MiniKotlinParser.ExpressionContext, right: MiniKotlinParser.ExpressionContext
+    ): MiniKotlinType {
+        val lValueType = checkExpression(left)
+        val rValueType = checkExpression(right)
+        if (lValueType != MiniKotlinType.Boolean || rValueType != MiniKotlinType.Boolean) error("Logical operation with non-Boolean operands")
+        return MiniKotlinType.Boolean
+    }
+
+    private fun parseOrBinary(
+        left: MiniKotlinParser.ExpressionContext, right: MiniKotlinParser.ExpressionContext, k: (String) -> String
+    ): String = parseExpression(left) { lValue ->
+        "if ($lValue) {\n${k("true").indent()}\n} else {\n" + parseExpression(right) { rValue ->
+            k(rValue)
+        }.indent() + "\n}"
     }
 
     private fun parseBinary(
@@ -286,7 +327,7 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
         val rValueType = checkExpression(right)
         if (lValueType != rValueType) error("Binary operations with different types not supported")
         return when (op) {
-            LT, GT, LE, GE, EQ, NEQ, AND, OR -> MiniKotlinType.Boolean
+            LT, GT, LE, GE, EQ, NEQ -> MiniKotlinType.Boolean
             else -> lValueType
         }
     }

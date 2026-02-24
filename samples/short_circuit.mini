@@ -1,0 +1,10 @@
+fun f0(): Boolean {
+    println("b")
+}
+
+fun main(): Unit {
+    println("a")
+    false && f0()
+    true || f0()
+    println("a")
+}
