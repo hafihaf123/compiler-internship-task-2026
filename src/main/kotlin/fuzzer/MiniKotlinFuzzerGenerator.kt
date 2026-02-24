@@ -56,7 +56,7 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
         } else "return " + generateExpression(returnType)
         val body = generateBlock()
         funtable.add(currentFunction)
-        return "fun $name($paramsString): ${returnType.toKotlinString()} {\n$body\n$returnExpression\n}\n\n"
+        return "fun $name($paramsString): ${returnType.toKotlinString()} {\n$body\n${returnExpression.prependIndent("    ")}\n}\n\n"
     }
 
     private fun generateFunctionParameter(): MiniKotlinParam {

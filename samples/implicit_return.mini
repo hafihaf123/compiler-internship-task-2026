@@ -1,0 +1,8 @@
+fun f0(): Unit {
+    println("f0")
+}
+
+fun main(): Unit {
+    f0()
+    println("main")
+}

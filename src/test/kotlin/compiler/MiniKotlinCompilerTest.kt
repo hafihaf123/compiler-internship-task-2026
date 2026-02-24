@@ -226,7 +226,6 @@ class MiniKotlinCompilerTest {
         assertIs<ExecutionResult.Success>(executionResult)
 
         val output = executionResult.stdout
-        assertTrue(output.contains("f0"), "Expected output to contain result f0, but got: $output")
-        assertTrue(output.contains("main"), "Expected output to contain result main, but got: $output")
+        assertEquals("f0\nmain\n", output)
     }
 }
