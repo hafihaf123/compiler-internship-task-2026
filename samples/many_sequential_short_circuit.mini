@@ -1,0 +1,61 @@
+fun and(): Unit {
+    var b01: Boolean = true && false
+    var b02: Boolean = true && false
+    var b03: Boolean = true && false
+    var b04: Boolean = true && false
+    var b05: Boolean = true && false
+    var b06: Boolean = true && false
+    var b07: Boolean = true && false
+    var b08: Boolean = true && false
+    var b09: Boolean = true && false
+    var b10: Boolean = true && false
+    var b11: Boolean = true && false
+    var b12: Boolean = true && false
+    var b13: Boolean = true && false
+    var b14: Boolean = true && false
+    var b15: Boolean = true && false
+    var b16: Boolean = true && false
+    var b17: Boolean = true && false
+    var b18: Boolean = true && false
+    var b19: Boolean = true && false
+    var b20: Boolean = true && false
+    var b21: Boolean = true && false
+    var b22: Boolean = true && false
+    var b23: Boolean = true && false
+    var b24: Boolean = true && false
+    var b25: Boolean = true && false
+}
+
+fun or(): Unit {
+    var b01: Boolean = true || false
+    var b02: Boolean = true || false
+    var b03: Boolean = true || false
+    var b04: Boolean = true || false
+    var b05: Boolean = true || false
+    var b06: Boolean = true || false
+    var b07: Boolean = true || false
+    var b08: Boolean = true || false
+    var b09: Boolean = true || false
+    var b10: Boolean = true || false
+    var b11: Boolean = true || false
+    var b12: Boolean = true || false
+    var b13: Boolean = true || false
+    var b14: Boolean = true || false
+    var b15: Boolean = true || false
+    var b16: Boolean = true || false
+    var b17: Boolean = true || false
+    var b18: Boolean = true || false
+    var b19: Boolean = true || false
+    var b20: Boolean = true || false
+    var b21: Boolean = true || false
+    var b22: Boolean = true || false
+    var b23: Boolean = true || false
+    var b24: Boolean = true || false
+    var b25: Boolean = true || false
+}
+
+fun main(): Unit {
+    and()
+    or()
+    println("ok")
+}

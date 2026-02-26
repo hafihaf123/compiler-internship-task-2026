@@ -55,7 +55,8 @@ class MiniKotlinCodegen {
 
     private fun generateIf(ifStatement: MiniKotlinAst.If, next: String) = with(ifStatement) {
         val contName = "__cont$argCounter"
-        val nextDecl = if (next.isNotEmpty()) "Continuation<Void> $contName = (__${argCounter++}) -> {\n${next.indent()}\n};\n" else ""
+        val nextDecl =
+            if (next.isNotEmpty()) "Continuation<Void> $contName = (__${argCounter++}) -> {\n${next.indent()}\n};\n" else ""
         val callNext = if (next.isNotEmpty()) "$contName.accept(null);" else ""
 
         val trueBlock = generateBlock(trueBlock, callNext)
@@ -124,19 +125,46 @@ class MiniKotlinCodegen {
                     }
                 }
 
-                MiniKotlinBinaryOperation.AND -> generateExpression(left) { lValue ->
-                    "if ($lValue) {\n" + generateExpression(right) { rValue ->
-                        k(rValue)
-                    }.indent() + "\n} else {\n${k("false").indent()}\n}"
-                }
+                MiniKotlinBinaryOperation.AND -> generateShortCircuit(
+                    left,
+                    right,
+                    k,
+                    { rEval, _ -> rEval },
+                    { _, invokeK -> invokeK("false") },
+                )
 
-                MiniKotlinBinaryOperation.OR -> generateExpression(left) { lValue ->
-                    "if ($lValue) {\n${k("true").indent()}\n} else {\n" + generateExpression(right) { rValue ->
-                        k(rValue)
-                    }.indent() + "\n}"
-                }
+                MiniKotlinBinaryOperation.OR -> generateShortCircuit(
+                    left,
+                    right,
+                    k,
+                    { _, invokeK -> invokeK("true") },
+                    { rEval, _ -> rEval },
+                )
             }
         }
+
+    private fun generateShortCircuit(
+        left: MiniKotlinAst.Expression,
+        right: MiniKotlinAst.Expression,
+        k: (String) -> String,
+        onTrue: (rEval: String, invokeK: (String) -> String) -> String,
+        onFalse: (rEval: String, invokeK: (String) -> String) -> String
+    ): String {
+        val counter = argCounter++
+        val contName = "__cont$counter"
+        val kDecl = "Continuation<Boolean> $contName = (__$counter) -> {\n${k("__$counter").indent()}\n};\n"
+        val invokeK = { v: String -> "$contName.accept($v);" }
+
+        return kDecl + generateExpression(left) { lValue ->
+            val rEval = generateExpression(right) { rValue -> invokeK(rValue) }
+
+            "if ($lValue) {\n${
+                onTrue(rEval, invokeK).indent()
+            }\n} else {\n${
+                onFalse(rEval, invokeK).indent()
+            }\n}"
+        }
+    }
 
     private fun generateFunctionCall(functionCall: MiniKotlinAst.FunctionCall, k: (String) -> String): String =
         with(functionCall) {
