@@ -397,4 +397,26 @@ class MiniKotlinCompilerTest {
         val output = executionResult.stdout
         assertEquals("hello\nworld\n", output)
     }
+
+    @Test
+    fun `compile explicit_return_main_middle_mini outputs hello`() {
+        val examplePath = Paths.get("samples/explicit_return_main_middle.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val javaCode = compiler.compile(program)
+
+        val javaFile = tempDir.resolve("MiniProgram.java")
+        Files.writeString(javaFile, javaCode)
+
+        val javaCompiler = JavaRuntimeCompiler()
+        val stdlibPath = resolveStdlibPath()
+        val (compilationResult, executionResult) = javaCompiler.compileAndExecute(javaFile, stdlibPath)
+
+        assertIs<CompilationResult.Success>(compilationResult)
+        assertIs<ExecutionResult.Success>(executionResult)
+
+        val output = executionResult.stdout
+        assertEquals("hello\n", output)
+    }
 }
