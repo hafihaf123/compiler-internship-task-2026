@@ -140,7 +140,7 @@ class MiniKotlinSemanticAnalyser(var program: MiniKotlinAst.Program) {
         functionCall.name = function.name
         for ((arg, param) in functionCall.argumentList.zip(function.parameterList)) {
             analyseExpression(arg)
-            if (arg.resolvedType?.accepts(param.type)?.not() ?: false) {
+            if ((param.type accepts arg.resolvedType!!).not()) {
                 error("Wrong parameter type for parameter '${param.name}' in function '${function.name}'")
             }
         }
