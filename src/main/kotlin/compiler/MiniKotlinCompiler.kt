@@ -23,7 +23,15 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
     private var tmpCounter = 0
         get() = field++
 
-    fun compile(program: MiniKotlinParser.ProgramContext, className: String = "MiniProgram"): String =
+    fun compile(program: MiniKotlinParser.ProgramContext, className: String = "MiniProgram"): String {
+        val ast = MiniKotlinParserVisitor().visitProgram(program)
+        MiniKotlinSemanticAnalyser(ast).analyse()
+        val code = MiniKotlinCodegen().generate(ast)
+        return "public class $className {\n${code.indent()}\n}"
+    }
+
+    @Deprecated("Newer and better implementation available", ReplaceWith("compile"), DeprecationLevel.ERROR)
+    fun compileOld(program: MiniKotlinParser.ProgramContext, className: String = "MiniProgram"): String =
         "public class $className {\n${visitProgram(program).trimEnd().indent()}\n}"
 
     override fun visitProgram(ctx: MiniKotlinParser.ProgramContext): String {
@@ -125,8 +133,10 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
         val valueType = checkExpression(ctx.expression())
         if (valueType != type) error("The Lvalue and Rvalue in variable declaration have different types")
         val name = ctx.IDENTIFIER().text
-//        variableInfo[name] = true
-        symtable.first()[name] = type
+        val scope = symtable.first()
+        if (name in scope) error("Variable redeclaration in the same scope")
+        symtable.firstNotNullOfOrNull { it[name] }
+        scope[name] = type
     }
 
     private fun parseVariableAssignment(ctx: MiniKotlinParser.VariableAssignmentContext, next: String): String {

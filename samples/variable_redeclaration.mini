@@ -1,0 +1,5 @@
+fun main(): Unit {
+    var x: String = "a"
+    var x: String = "b"
+    println(x)
+}

@@ -23,3 +23,7 @@ enum class MiniKotlinType {
         Unit -> "Unit"
     }
 }
+
+infix fun MiniKotlinType.accepts(other: MiniKotlinType): Boolean {
+    return this == MiniKotlinType.Any || other == MiniKotlinType.Any || this == other
+}

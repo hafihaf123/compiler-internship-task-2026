@@ -4,4 +4,7 @@ fun main(): Unit {
     if (a == "ab") {
         println("ok")
     }
+    if (a != "ab") {
+        println("bad")
+    }
 }

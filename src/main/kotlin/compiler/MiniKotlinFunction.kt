@@ -2,10 +2,10 @@ package compiler
 
 import MiniKotlinParser
 
-sealed class MiniKotlinFunction {
-    abstract val name: String
-    abstract val parameters: List<MiniKotlinParam>
-    abstract val returnType: MiniKotlinType
+sealed interface MiniKotlinFunction {
+    val name: String
+    val parameters: List<MiniKotlinParam>
+    val returnType: MiniKotlinType
 }
 
 data class UserDefinedFunction(
@@ -13,7 +13,7 @@ data class UserDefinedFunction(
     override val parameters: List<MiniKotlinParam>,
     override val returnType: MiniKotlinType,
     val blockCtx: MiniKotlinParser.BlockContext?
-) : MiniKotlinFunction() {
+) : MiniKotlinFunction {
     lateinit var block: String
 
     override fun toString(): String {
@@ -33,7 +33,7 @@ data class BuiltinFunction(
     override val name: String,
     override val parameters: List<MiniKotlinParam>,
     override val returnType: MiniKotlinType,
-) : MiniKotlinFunction()
+) : MiniKotlinFunction
 
 val defaultBuiltins = mapOf(
     "println" to BuiltinFunction(

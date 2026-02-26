@@ -204,7 +204,7 @@ class MiniKotlinCompilerTest {
 
         val compiler = MiniKotlinCompiler()
         val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
-        assertEquals("Assignment to function parameter", exc.message)
+        assertEquals("Cannot assign value to parameter v0", exc.message)
     }
 
     @Test
@@ -290,5 +290,37 @@ class MiniKotlinCompilerTest {
 
         val output = executionResult.stdout
         assertEquals("ok\n", output)
+    }
+
+    @Test
+    fun `compile variable_redeclaration_mini fails`() {
+        val examplePath = Paths.get("samples/variable_redeclaration.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
+        assertEquals("Variable redeclaration in the same scope of variable 'x'", exc.message)
+    }
+
+    @Test
+    fun `compile variable_shadowing_1_mini outputs hello world`() {
+        val examplePath = Paths.get("samples/variable_shadowing_1.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val javaCode = compiler.compile(program)
+
+        val javaFile = tempDir.resolve("MiniProgram.java")
+        Files.writeString(javaFile, javaCode)
+
+        val javaCompiler = JavaRuntimeCompiler()
+        val stdlibPath = resolveStdlibPath()
+        val (compilationResult, executionResult) = javaCompiler.compileAndExecute(javaFile, stdlibPath)
+
+        assertIs<CompilationResult.Success>(compilationResult)
+        assertIs<ExecutionResult.Success>(executionResult)
+
+        val output = executionResult.stdout
+        assertEquals("hello\nworld\n", output)
     }
 }
