@@ -20,7 +20,7 @@ class MiniKotlinCodegen {
             val parameters = if (isMain) {
                 "String[] args"
             } else {
-                val parameters = parameterList.joinToString {"${it.type.generate()} ${it.name}"}
+                val parameters = parameterList.joinToString { "${it.type.generate()} ${it.name}" }
                 val separator = if (parameters.isEmpty()) "" else ", "
                 "$parameters${separator}Continuation<${returnType.generate()}> __continuation"
             }
@@ -54,16 +54,16 @@ class MiniKotlinCodegen {
         }
 
     private fun generateIf(ifStatement: MiniKotlinAst.If, next: String) = with(ifStatement) {
-        val trueBlock = generateBlock(trueBlock, next)
-        val falseBlock = falseBlock?.let {
-            " else " + generateBlock(it, next)
-        } ?: if (next.isEmpty()) {
-            ""
-        } else {
-            " else {\n${next.indent()}\n}"
-        }
+        val contName = "__cont$argCounter"
+        val nextDecl = if (next.isNotEmpty()) "Continuation<Void> $contName = (__${argCounter++}) -> {\n${next.indent()}\n};\n" else ""
+        val callNext = if (next.isNotEmpty()) "$contName.accept(null);" else ""
 
-        generateExpression(condition) { "if ($it) $trueBlock$falseBlock" }
+        val trueBlock = generateBlock(trueBlock, callNext)
+        val falseBlock = falseBlock?.let {
+            " else " + generateBlock(it, callNext)
+        } ?: if (next.isEmpty()) "" else " else {\n${callNext.indent()}\n}"
+
+        generateExpression(condition) { "${nextDecl}if ($it) $trueBlock$falseBlock" }
     }
 
     private fun generateWhile(whileStatement: MiniKotlinAst.While, next: String) = with(whileStatement) {

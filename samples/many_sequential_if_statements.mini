@@ -1,0 +1,28 @@
+fun main(): Unit {
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    if (true) {} else {}
+    println("ok")
+}
