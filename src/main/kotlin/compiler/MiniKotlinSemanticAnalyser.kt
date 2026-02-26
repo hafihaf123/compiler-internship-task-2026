@@ -166,9 +166,9 @@ class MiniKotlinSemanticAnalyser(var program: MiniKotlinAst.Program) {
                 else null
             }
 
-            MiniKotlinBinaryOperation.PLUS -> when {
-                leftType == MiniKotlinType.Int && rightType == MiniKotlinType.Int -> MiniKotlinType.Int
-                leftType == MiniKotlinType.String || rightType == MiniKotlinType.String -> MiniKotlinType.String
+            MiniKotlinBinaryOperation.PLUS -> when (leftType) {
+                MiniKotlinType.Int if rightType == MiniKotlinType.Int -> MiniKotlinType.Int
+                MiniKotlinType.String -> MiniKotlinType.String
                 else -> null
             }
 
