@@ -365,6 +365,17 @@ class MiniKotlinCompilerTest {
         val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
         assertEquals("'main' function should always return Unit", exc.message)
     }
+
+    @Test
+    fun `compile missing_necessary_return_mini fails`() {
+        val examplePath = Paths.get("samples/missing_necessary_return.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
+        assertEquals("Missing return statement in function 'f0'", exc.message)
+    }
+
     @Test
     fun `compile string_literal_escaping_mini outputs hello world`() {
         val examplePath = Paths.get("samples/string_literal_escaping.mini")

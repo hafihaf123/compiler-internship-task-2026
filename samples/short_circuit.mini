@@ -1,5 +1,6 @@
 fun f0(): Boolean {
     println("b")
+    return true
 }
 
 fun main(): Unit {

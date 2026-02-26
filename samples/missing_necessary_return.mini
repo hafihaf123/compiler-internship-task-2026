@@ -1,0 +1,7 @@
+fun f0(): Int {
+    println("Should return an integer")
+}
+
+fun main(): Unit {
+    f0()
+}

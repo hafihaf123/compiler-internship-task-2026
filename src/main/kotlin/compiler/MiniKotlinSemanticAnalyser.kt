@@ -46,8 +46,9 @@ class MiniKotlinSemanticAnalyser(var program: MiniKotlinAst.Program) {
 
     private fun analyseFunctionDeclaration(functionDeclaration: MiniKotlinAst.FunctionDeclaration) =
         with(functionDeclaration) {
-            if (name == "main" && returnType != MiniKotlinType.Unit)
-                error("'main' function should always return Unit")
+            if (name == "main" && returnType != MiniKotlinType.Unit) error("'main' function should always return Unit")
+            if (returnType != MiniKotlinType.Unit && !alwaysReturns(block)) error("Missing return statement in function '$name'")
+
             currentReturnType = returnType
             symtable.addFirst(mutableMapOf())
             parameterList.forEach(::analyseParameter)
@@ -77,12 +78,12 @@ class MiniKotlinSemanticAnalyser(var program: MiniKotlinAst.Program) {
     }
 
     private fun analyseReturn(statement: MiniKotlinAst.Return) {
-        statement.value?.let{ value ->
+        statement.value?.let { value ->
             analyseExpression(value)
-            if (value.resolvedType != currentReturnType)
-                error("Return type mismatch: expected ${currentReturnType}, got ${value.resolvedType!!}")
-        } ?: if (currentReturnType != MiniKotlinType.Unit)
-            error("Return type mismatch: expected ${currentReturnType}, got Unit") else {}
+            if (value.resolvedType != currentReturnType) error("Return type mismatch: expected ${currentReturnType}, got ${value.resolvedType!!}")
+        }
+            ?: if (currentReturnType != MiniKotlinType.Unit) error("Return type mismatch: expected ${currentReturnType}, got Unit") else {
+            }
     }
 
     private fun analyseIf(ifStatement: MiniKotlinAst.If) = with(ifStatement) {
@@ -186,5 +187,17 @@ class MiniKotlinSemanticAnalyser(var program: MiniKotlinAst.Program) {
                 else null
             }
         } ?: error("Invalid types for binary expression: $leftType ${binaryExpression.operation} $rightType")
+    }
+
+    // Definite return analysis helpers
+
+    private fun alwaysReturns(block: MiniKotlinAst.Block): Boolean = block.statements.any(::alwaysReturns)
+
+    private fun alwaysReturns(statement: MiniKotlinAst.Statement) = with(statement) {
+        when (this) {
+            is MiniKotlinAst.If -> alwaysReturns(trueBlock) && falseBlock?.let(::alwaysReturns) ?: false
+            is MiniKotlinAst.Return -> true
+            is MiniKotlinAst.Expression, is MiniKotlinAst.VariableAssignment, is MiniKotlinAst.VariableDeclaration, is MiniKotlinAst.While -> false
+        }
     }
 }
