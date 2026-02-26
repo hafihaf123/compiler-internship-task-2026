@@ -67,6 +67,13 @@ class MiniKotlinCodegen {
         generateExpression(condition) { "${nextDecl}if ($it) $trueBlock$falseBlock" }
     }
 
+
+    /**
+     * Generates a while loop using a recursive continuation pattern.
+     * The loop is implemented as a continuation that recursively calls itself.
+     * Note: This implementation will throw a StackOverflowError on a large number of iterations
+     * because Java does not support tail call optimization (TCO).
+     */
     private fun generateWhile(whileStatement: MiniKotlinAst.While, next: String) = with(whileStatement) {
         val loopName = "__loop${argCounter}"
         val continuationDeclaration = "Continuation<Void>[] $loopName = new Continuation[1];"
@@ -187,7 +194,7 @@ class MiniKotlinCodegen {
         MiniKotlinType.Int -> "Integer"
         MiniKotlinType.Boolean -> "Boolean"
         MiniKotlinType.String -> "String"
-        MiniKotlinType.Any -> "Any"
+        MiniKotlinType.Any -> "Object"
         MiniKotlinType.Unit -> "Void"
     }
 }
