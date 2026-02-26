@@ -76,7 +76,7 @@ class MiniKotlinSemanticAnalyser(var program: MiniKotlinAst.Program) {
 
     private fun analyseIf(ifStatement: MiniKotlinAst.If) = with(ifStatement) {
         analyseExpression(condition)
-        if (condition.resolvedType != MiniKotlinType.Boolean) error("If condition type mismatch: Expected 'Boolean', got '${condition.resolvedType?.toKotlinString()}'")
+        if (condition.resolvedType != MiniKotlinType.Boolean) error("If condition type mismatch: Expected 'Boolean', got '${condition.resolvedType}'")
         analyseBlock(trueBlock)
         falseBlock?.let(::analyseBlock)
     }
@@ -101,7 +101,7 @@ class MiniKotlinSemanticAnalyser(var program: MiniKotlinAst.Program) {
 
     private fun analyseWhile(whileStatement: MiniKotlinAst.While) = with(whileStatement) {
         analyseExpression(condition)
-        if (condition.resolvedType != MiniKotlinType.Boolean) error("While condition type mismatch: Expected 'Boolean', got '${condition.resolvedType?.toKotlinString()}'")
+        if (condition.resolvedType != MiniKotlinType.Boolean) error("While condition type mismatch: Expected 'Boolean', got '${condition.resolvedType}'")
         analyseBlock(block)
     }
 

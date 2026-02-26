@@ -30,7 +30,7 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
         return "public class $className {\n${code.indent()}\n}"
     }
 
-    @Deprecated("Newer and better implementation available", ReplaceWith("compile"), DeprecationLevel.ERROR)
+    @Deprecated("Newer and better implementation available", ReplaceWith("compile"), DeprecationLevel.WARNING)
     fun compileOld(program: MiniKotlinParser.ProgramContext, className: String = "MiniProgram"): String =
         "public class $className {\n${visitProgram(program).trimEnd().indent()}\n}"
 
@@ -125,7 +125,7 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
     private fun parseVariableDeclaration(ctx: MiniKotlinParser.VariableDeclarationContext, next: String): String {
         val type = parseType(ctx.type())
         val name = ctx.IDENTIFIER().text
-        return parseExpression(ctx.expression()) { "$type[] $name = new $type[] { $it };\n$next" }
+        return parseExpression(ctx.expression()) { "${type.generate()}[] $name = new ${type.generate()}[] { $it };\n$next" }
     }
 
     private fun checkVariableDeclaration(ctx: MiniKotlinParser.VariableDeclarationContext) {
@@ -415,5 +415,13 @@ class MiniKotlinCompiler : MiniKotlinBaseVisitor<String>() {
         }
 
         else -> error("Unknown PrimaryContext type: ${ctx.javaClass.simpleName}")
+    }
+
+    private fun MiniKotlinType.generate() = when (this) {
+        MiniKotlinType.Int -> "Integer"
+        MiniKotlinType.Boolean -> "Boolean"
+        MiniKotlinType.String -> "String"
+        MiniKotlinType.Any -> "Any"
+        MiniKotlinType.Unit -> "Void"
     }
 }

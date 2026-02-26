@@ -18,7 +18,7 @@ data class UserDefinedFunction(
 
     override fun toString(): String {
         val additionalParameter = if (name != "main") {
-            "Continuation<$returnType> __continuation"
+            "Continuation<${returnType.generate()}> __continuation"
         } else {
             "String[] args"
         }
@@ -26,6 +26,14 @@ data class UserDefinedFunction(
         val parameterList = "(${parameters.joinToString()}$separator$additionalParameter)"
         val header = "public static void $name$parameterList"
         return "$header $block\n\n"
+    }
+
+    private fun MiniKotlinType.generate() = when (this) {
+        MiniKotlinType.Int -> "Integer"
+        MiniKotlinType.Boolean -> "Boolean"
+        MiniKotlinType.String -> "String"
+        MiniKotlinType.Any -> "Any"
+        MiniKotlinType.Unit -> "Void"
     }
 }
 

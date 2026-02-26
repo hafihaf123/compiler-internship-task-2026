@@ -20,9 +20,9 @@ class MiniKotlinCodegen {
             val parameters = if (isMain) {
                 "String[] args"
             } else {
-                val parameters = parameterList.joinToString {"${it.type} ${it.name}"}
+                val parameters = parameterList.joinToString {"${it.type.generate()} ${it.name}"}
                 val separator = if (parameters.isEmpty()) "" else ", "
-                "$parameters${separator}Continuation<$returnType> __continuation"
+                "$parameters${separator}Continuation<${returnType.generate()}> __continuation"
             }
 
             val next = if (returnType == MiniKotlinType.Unit && name != "main") "__continuation.accept(null);"
@@ -45,7 +45,7 @@ class MiniKotlinCodegen {
 
     private fun generateVariableDeclaration(variableDeclaration: MiniKotlinAst.VariableDeclaration, next: String) =
         with(variableDeclaration) {
-            generateExpression(value) { "$type[] $javaName = new $type[] { $it };\n$next" }
+            generateExpression(value) { "${type.generate()}[] $javaName = new ${type.generate()}[] { $it };\n$next" }
         }
 
     private fun generateVariableAssignment(variableAssignment: MiniKotlinAst.VariableAssignment, next: String) =
@@ -154,4 +154,12 @@ class MiniKotlinCodegen {
 
             evaluateArgs("")
         }
+
+    private fun MiniKotlinType.generate() = when (this) {
+        MiniKotlinType.Int -> "Integer"
+        MiniKotlinType.Boolean -> "Boolean"
+        MiniKotlinType.String -> "String"
+        MiniKotlinType.Any -> "Any"
+        MiniKotlinType.Unit -> "Void"
+    }
 }

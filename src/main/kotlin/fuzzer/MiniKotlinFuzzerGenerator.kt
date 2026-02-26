@@ -48,7 +48,7 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
         } else {
             emptyList()
         }
-        val paramsString = parameters.joinToString { "${it.name}: ${it.type.toKotlinString()}" }
+        val paramsString = parameters.joinToString { "${it.name}: ${it.type}" }
         currentFunction = UserDefinedFunction(name, parameters, returnType, null)
         val returnExpression = if (returnType == MiniKotlinType.Unit) {
             if (random.nextBoolean()) "return"
@@ -56,7 +56,7 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
         } else "return " + generateExpression(returnType)
         val body = generateBlock()
         funtable.add(currentFunction)
-        return "fun $name($paramsString): ${returnType.toKotlinString()} {\n$body\n${returnExpression.prependIndent("    ")}\n}\n\n"
+        return "fun $name($paramsString): $returnType {\n$body\n${returnExpression.prependIndent("    ")}\n}\n\n"
     }
 
     private fun generateFunctionParameter(): MiniKotlinParam {
@@ -112,7 +112,7 @@ class MiniKotlinFuzzerGenerator(seed: Long = Random.nextLong(), private var budg
                 val name = "v${varCounter++}"
                 val expr = generateExpression(type)
                 symtable[name] = type
-                "var $name: ${type.toKotlinString()} = $expr"
+                "var $name: $type = $expr"
             }
 
             "Assignment" -> {
