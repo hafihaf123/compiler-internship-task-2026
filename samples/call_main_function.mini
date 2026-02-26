@@ -1,0 +1,5 @@
+fun f(): Unit {
+    main()
+}
+
+fun main(): Unit {}

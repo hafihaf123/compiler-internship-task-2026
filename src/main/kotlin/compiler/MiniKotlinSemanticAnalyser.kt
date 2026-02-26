@@ -138,6 +138,8 @@ class MiniKotlinSemanticAnalyser(var program: MiniKotlinAst.Program) {
     }
 
     private fun analyseFunctionCall(functionCall: MiniKotlinAst.FunctionCall) {
+        if (functionCall.name == "main")
+            error("Main function calls forbidden.")
         val function = functionTable[functionCall.name] ?: error("Called function not found: ${functionCall.name}")
         functionCall.name = function.name
         for ((arg, param) in functionCall.argumentList.zip(function.parameterList)) {

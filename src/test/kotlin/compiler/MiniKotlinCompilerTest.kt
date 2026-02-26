@@ -473,4 +473,14 @@ class MiniKotlinCompilerTest {
         val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
         assertEquals("'main' function doesn't accept any parameters", exc.message)
     }
+
+    @Test
+    fun `compile call_main_function_mini fails`() {
+        val examplePath = Paths.get("samples/call_main_function.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
+        assertEquals("Main function calls forbidden.", exc.message)
+    }
 }
