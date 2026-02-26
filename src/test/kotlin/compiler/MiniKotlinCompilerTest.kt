@@ -355,4 +355,14 @@ class MiniKotlinCompilerTest {
         val output = executionResult.stdout
         assertEquals("", output)
     }
+
+    @Test
+    fun `compile non_unit_main_mini fails`() {
+        val examplePath = Paths.get("samples/non_unit_main.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
+        assertEquals("'main' function should always return Unit", exc.message)
+    }
 }

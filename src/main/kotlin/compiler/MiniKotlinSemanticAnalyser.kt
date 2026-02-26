@@ -46,6 +46,8 @@ class MiniKotlinSemanticAnalyser(var program: MiniKotlinAst.Program) {
 
     private fun analyseFunctionDeclaration(functionDeclaration: MiniKotlinAst.FunctionDeclaration) =
         with(functionDeclaration) {
+            if (name == "main" && returnType != MiniKotlinType.Unit)
+                error("'main' function should always return Unit")
             currentReturnType = returnType
             symtable.addFirst(mutableMapOf())
             parameterList.forEach(::analyseParameter)
