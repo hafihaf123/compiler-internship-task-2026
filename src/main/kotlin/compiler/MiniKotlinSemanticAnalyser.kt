@@ -67,11 +67,20 @@ class MiniKotlinSemanticAnalyser(var program: MiniKotlinAst.Program) {
         when (statement) {
             is MiniKotlinAst.Expression -> analyseExpression(statement)
             is MiniKotlinAst.If -> analyseIf(statement)
-            is MiniKotlinAst.Return -> statement.value?.let(::analyseExpression)
+            is MiniKotlinAst.Return -> analyseReturn(statement)
             is MiniKotlinAst.VariableAssignment -> analyseVariableAssignment(statement)
             is MiniKotlinAst.VariableDeclaration -> analyseVariableDeclaration(statement)
             is MiniKotlinAst.While -> analyseWhile(statement)
         }
+    }
+
+    private fun analyseReturn(statement: MiniKotlinAst.Return) {
+        statement.value?.let{ value ->
+            analyseExpression(value)
+            if (value.resolvedType != currentReturnType)
+                error("Return type mismatch: expected ${currentReturnType}, got ${value.resolvedType!!}")
+        } ?: if (currentReturnType != MiniKotlinType.Unit)
+            error("Return type mismatch: expected ${currentReturnType}, got Unit") else {}
     }
 
     private fun analyseIf(ifStatement: MiniKotlinAst.If) = with(ifStatement) {

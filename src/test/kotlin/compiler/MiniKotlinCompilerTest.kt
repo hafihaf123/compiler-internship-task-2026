@@ -323,4 +323,14 @@ class MiniKotlinCompilerTest {
         val output = executionResult.stdout
         assertEquals("hello\nworld\n", output)
     }
+
+    @Test
+    fun `compile return_type_mismatch_mini fails`() {
+        val examplePath = Paths.get("samples/return_type_mismatch.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
+        assertEquals("Return type mismatch: expected Int, got Boolean", exc.message)
+    }
 }

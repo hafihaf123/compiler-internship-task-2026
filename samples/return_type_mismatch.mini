@@ -1,0 +1,7 @@
+fun f0(): Int {
+    return true
+}
+
+fun main(): Unit {
+    f0()
+}
