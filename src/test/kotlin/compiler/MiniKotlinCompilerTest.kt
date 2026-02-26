@@ -365,4 +365,25 @@ class MiniKotlinCompilerTest {
         val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
         assertEquals("'main' function should always return Unit", exc.message)
     }
+    @Test
+    fun `compile string_literal_escaping_mini outputs hello world`() {
+        val examplePath = Paths.get("samples/string_literal_escaping.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val javaCode = compiler.compile(program)
+
+        val javaFile = tempDir.resolve("MiniProgram.java")
+        Files.writeString(javaFile, javaCode)
+
+        val javaCompiler = JavaRuntimeCompiler()
+        val stdlibPath = resolveStdlibPath()
+        val (compilationResult, executionResult) = javaCompiler.compileAndExecute(javaFile, stdlibPath)
+
+        assertIs<CompilationResult.Success>(compilationResult)
+        assertIs<ExecutionResult.Success>(executionResult)
+
+        val output = executionResult.stdout
+        assertEquals("hello\nworld\n", output)
+    }
 }
