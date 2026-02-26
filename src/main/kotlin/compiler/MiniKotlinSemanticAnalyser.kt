@@ -46,7 +46,9 @@ class MiniKotlinSemanticAnalyser(var program: MiniKotlinAst.Program) {
 
     private fun analyseFunctionDeclaration(functionDeclaration: MiniKotlinAst.FunctionDeclaration) =
         with(functionDeclaration) {
-            if (name == "main" && returnType != MiniKotlinType.Unit) error("'main' function should always return Unit")
+            val isMain = name == "main"
+            if (isMain && returnType != MiniKotlinType.Unit) error("'main' function should always return Unit")
+            if (isMain && parameterList.isNotEmpty()) error("'main' function doesn't accept any parameters")
             if (returnType != MiniKotlinType.Unit && !alwaysReturns(block)) error("Missing return statement in function '$name'")
 
             currentReturnType = returnType

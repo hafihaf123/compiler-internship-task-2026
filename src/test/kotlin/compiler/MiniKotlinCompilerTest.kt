@@ -463,4 +463,14 @@ class MiniKotlinCompilerTest {
         val output = executionResult.stdout
         assertEquals("ok\n", output)
     }
+
+    @Test
+    fun `compile main_with_parameters_mini fails`() {
+        val examplePath = Paths.get("samples/main_with_parameters.mini")
+        val program = parseFile(examplePath)
+
+        val compiler = MiniKotlinCompiler()
+        val exc = assertFailsWith<IllegalStateException> { compiler.compile(program) }
+        assertEquals("'main' function doesn't accept any parameters", exc.message)
+    }
 }
